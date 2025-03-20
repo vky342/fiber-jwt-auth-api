@@ -80,6 +80,12 @@ func AuthHandlers(route fiber.Router, store dynamodb.Storage){
 		if err != nil {
 			return c.Status(fiber.StatusExpectationFailed).JSON(fiber.Map{
 				"error" : "error fetching the password from DB",
+			})
+		}
+
+		if retrieved_password == nil {
+			return c.Status(fiber.StatusExpectationFailed).JSON(fiber.Map{
+				"error" : "error fetching the password from DB",
 				"mssg": "username wrong",
 			})
 		}
