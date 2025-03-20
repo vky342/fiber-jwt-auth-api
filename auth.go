@@ -62,8 +62,58 @@ func AuthHandlers(route fiber.Router, store dynamodb.Storage){
 
 	})
 
+
 	route.Post("login", func(c *fiber.Ctx) error {
-		return c.SendString("login route triggered")
+		user := User{
+			Username: c.FormValue("username"),
+			Password: c.FormValue("password"),
+		}
+
+		if user.Username == "" || user.Password == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error" : "username and password required",
+			})
+		}
+
+		retrieved_password,err := store.Get(user.Username)
+
+		if err != nil {
+			return c.Status(fiber.StatusExpectationFailed).JSON(fiber.Map{
+				"error" : "error fetching the password from DB",
+				"mssg": "username wrong",
+			})
+		}
+
+		//return c.SendString(string(retrieved_password) + " sent " + user.Password)
+
+		err = bcrypt.CompareHashAndPassword(retrieved_password,[]byte(user.Password))
+
+		if err != nil {
+			return c.Status(fiber.StatusExpectationFailed).JSON(fiber.Map{
+				"error" : "Password is wrong",
+			})
+		}
+
+		token,err := GenerateToken(&user)
+
+		if err != nil {
+			return c.Status(fiber.StatusExpectationFailed).JSON(fiber.Map{
+				"error" : "Token generation failed",
+			})
+		}
+		
+		c.Cookie(&fiber.Cookie{
+			Name: "jwt",
+			Value: token,
+			HTTPOnly: !c.IsFromLocal(),
+			Secure: !c.IsFromLocal(),
+			MaxAge: 3600 * 24 * 7, // 7 days
+		})
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"msg" :"Login Succes",
+			"token": token,
+		})
 	})
 
 }
