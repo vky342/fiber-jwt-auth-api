@@ -14,11 +14,15 @@ func main() {
 
 	store_ngos := InitializeDB(dynamodb.Config{Endpoint: "http://localhost:8000",Table: "Ngos"})
 
+	store_fresh_Donation := InitializeDB(dynamodb.Config{Endpoint: "http://localhost:8000", Table: "Fresh_Donations"})
+
 
 	//Handlers here
 	AuthHandlers(app.Group("/restaurants/auth"),store_restaurants)
 
 	AuthHandlers(app.Group("/ngos/auth"),store_ngos)
+
+	FreshDonationHandlers(app.Group("/freshdonations"),store_fresh_Donation)
 
 
 	//start the server on port 3000
